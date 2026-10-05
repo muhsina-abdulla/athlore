@@ -9,6 +9,16 @@ dist/
 web-build/
 expo-env.d.ts
 
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Personal training data / local data
+*.xlsx
+*.xls
+*.csv
+
 # Native
 .kotlin/
 *.orig.*
@@ -29,9 +39,6 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
-
-# local env files
-.env*.local
 
 # typescript
 *.tsbuildinfo
