@@ -10,6 +10,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { DatabaseGate } from '@/db/DatabaseGate';
 import { colors } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
@@ -44,17 +45,19 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navTheme}>
       <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.bg },
-          animation: 'slide_from_right',
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="log" options={{ animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="session/[id]" />
-      </Stack>
+      <DatabaseGate>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.bg },
+            animation: 'slide_from_right',
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="log" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="session/[id]" />
+        </Stack>
+      </DatabaseGate>
     </ThemeProvider>
   );
 }

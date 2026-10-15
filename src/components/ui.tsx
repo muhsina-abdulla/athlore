@@ -3,6 +3,8 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +15,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { KeyboardScrollView } from '@/components/KeyboardScrollView';
 
 import {
   colors,
@@ -82,9 +86,11 @@ type ChipProps = {
   selected?: boolean;
   onPress?: () => void;
   icon?: IconName;
+  // Show a check mark when selected (multi-select chips).
+  check?: boolean;
 };
 
-export function Chip({ label, selected, onPress, icon }: ChipProps) {
+export function Chip({ label, selected, onPress, icon, check }: ChipProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -97,8 +103,9 @@ export function Chip({ label, selected, onPress, icon }: ChipProps) {
         pressed && styles.pressed,
       ]}
     >
+      {check && selected ? <Icon name="check" size={size.iconSm} color="onAccent" /> : null}
       {icon ? (
-        <Icon name={icon} size={size.iconSm} color={selected ? 'onAccent' : 'textSecondary'} />
+        <Icon name={icon} size={size.iconSm} color={selected ? 'onAccent' : 'accent'} />
       ) : null}
       <Txt variant="bodySm" color={selected ? 'onAccent' : 'text'}>
         {label}
@@ -109,7 +116,7 @@ export function Chip({ label, selected, onPress, icon }: ChipProps) {
 
 // ---------- Button ----------
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'quiet' | 'danger';
 
 type ButtonProps = {
   title: string;
@@ -125,6 +132,7 @@ const buttonText: Record<ButtonVariant, ColorName> = {
   primary: 'onAccent',
   secondary: 'text',
   ghost: 'accent',
+  quiet: 'textSecondary',
   danger: 'danger',
 };
 
@@ -171,15 +179,18 @@ export function Button({
 // Ratings are stored 1–10 and shown as 5 stars with half-stars.
 // Tapping a star sets a whole-star value: 2, 4, … 10.
 type StarsProps = {
+  // 1-10, where each point is half a star. Null means no rating.
   value: number | null;
-  onChange?: (value: number) => void;
+  // When given, each half of a star is tappable. Tapping the current value clears it.
+  onChange?: (value: number | null) => void;
   starSize?: number;
 };
 
 export function Stars({ value, onChange, starSize = size.star }: StarsProps) {
   const rating = value ?? 0;
+  const pick = (next: number) => onChange?.(next === value ? null : next);
   return (
-    <View style={styles.row} accessibilityLabel={`Rating ${rating / 2} of 5`}>
+    <View style={styles.row} accessibilityLabel={`Rating ${rating} out of 10`}>
       {[1, 2, 3, 4, 5].map((star) => {
         const full = rating >= star * 2;
         const half = !full && rating === star * 2 - 1;
@@ -187,16 +198,26 @@ export function Stars({ value, onChange, starSize = size.star }: StarsProps) {
         const filled = full || half;
         const icon = <Icon name={name} size={starSize} color={filled ? 'accent' : 'textTertiary'} />;
         if (!onChange) return <View key={star}>{icon}</View>;
+        const leftValue = star * 2 - 1;
+        const rightValue = star * 2;
         return (
-          <Pressable
-            key={star}
-            onPress={() => onChange(star * 2)}
-            accessibilityRole="button"
-            accessibilityLabel={`${star} star${star > 1 ? 's' : ''}`}
-            hitSlop={space.sm}
-          >
+          <View key={star} style={{ width: starSize, height: starSize }}>
             {icon}
-          </Pressable>
+            <View style={styles.starHalves}>
+              <Pressable
+                style={styles.starHalf}
+                onPress={() => pick(leftValue)}
+                accessibilityRole="button"
+                accessibilityLabel={`${leftValue} out of 10`}
+              />
+              <Pressable
+                style={styles.starHalf}
+                onPress={() => pick(rightValue)}
+                accessibilityRole="button"
+                accessibilityLabel={`${rightValue} out of 10`}
+              />
+            </View>
+          </View>
         );
       })}
     </View>
@@ -332,6 +353,11 @@ type StackScreenProps = {
 export function StackScreen({ title, children, footer, headerRight, closeIcon }: StackScreenProps) {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right', 'bottom']}>
+      {/* Android resizes the window for the keyboard itself; iOS needs the padding. */}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <View style={styles.stackHeader}>
         <Pressable
           onPress={() => router.back()}
@@ -346,10 +372,9 @@ export function StackScreen({ title, children, footer, headerRight, closeIcon }:
         </Txt>
         {headerRight}
       </View>
-      <ScrollView contentContainerStyle={styles.stackContent} keyboardShouldPersistTaps="handled">
-        {children}
-      </ScrollView>
+      <KeyboardScrollView contentContainerStyle={styles.stackContent}>{children}</KeyboardScrollView>
       {footer ? <View style={styles.footer}>{footer}</View> : null}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -379,8 +404,10 @@ const styles = StyleSheet.create({
     paddingVertical: space.sm,
     borderRadius: radius.full,
     backgroundColor: colors.inset,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.divider,
   },
-  chipSelected: { backgroundColor: colors.accent },
+  chipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
 
   button: {
     flexDirection: 'row',
@@ -394,11 +421,15 @@ const styles = StyleSheet.create({
   button_primary: { backgroundColor: colors.accent },
   button_secondary: { backgroundColor: colors.card },
   button_ghost: { backgroundColor: 'transparent' },
+  button_quiet: { backgroundColor: 'transparent', minHeight: size.touch },
   button_danger: {
     backgroundColor: colors.dangerSoft,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.dangerBorder,
   },
+
+  starHalves: { ...StyleSheet.absoluteFill, flexDirection: 'row' },
+  starHalf: { flex: 1 },
 
   progressTrack: {
     height: size.progress,

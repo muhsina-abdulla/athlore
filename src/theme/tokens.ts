@@ -5,7 +5,7 @@ export const colors = {
   bg: '#14161A',
   card: '#1C1F25',
   cardPressed: '#23272E',
-  inset: '#262A31',
+  inset: '#101216',
   divider: '#2A2E35',
 
   text: '#F2F4F7',
@@ -57,12 +57,19 @@ export const size = {
   iconXl: 32,
   emptyTile: 72,
   star: 28,
+  starInput: 40,
+  dialogMax: 360,
   progress: 6,
   tabBar: 64,
   logButton: 56,
   logButtonLift: 16,
   sheetHandle: 4,
   sheetHandleWidth: 36,
+  input: 52,
+  dot: 10,
+  weekDay: 36,
+  moodCircle: 44,
+  inputMulti: 96,
 } as const;
 
 export const opacity = {

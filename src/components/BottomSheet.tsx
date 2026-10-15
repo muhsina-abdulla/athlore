@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, Txt } from '@/components/ui';
@@ -15,6 +15,29 @@ type BottomSheetProps = {
 
 export function BottomSheet({ visible, onClose, title, children, footer }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
+  const sheetRef = useRef<View>(null);
+  // How far the sheet is lifted so the keyboard doesn't cover it. A modal gets no
+  // help from the screen behind it, so it measures how much the keyboard covers
+  // and rises by exactly that (nothing if the window already made room).
+  const [lift, setLift] = useState(0);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', (e) => {
+      setLift(0);
+      // Let the layout settle without the lift, then measure the overlap.
+      setTimeout(() => {
+        sheetRef.current?.measureInWindow((_x, y, _w, h) => {
+          const covered = y + h - e.endCoordinates.screenY;
+          setLift(covered > 0 ? covered : 0);
+        });
+      }, 100);
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => setLift(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
   return (
     <Modal
       visible={visible}
@@ -24,9 +47,12 @@ export function BottomSheet({ visible, onClose, title, children, footer }: Botto
       statusBarTranslucent
       navigationBarTranslucent
     >
-      <View style={styles.root}>
+      <View style={[styles.root, { paddingBottom: lift }]}>
         <Pressable style={styles.scrim} onPress={onClose} accessibilityLabel="Close sheet" />
-        <View style={[styles.sheet, { paddingBottom: insets.bottom + space.lg }]}>
+        <View
+          ref={sheetRef}
+          style={[styles.sheet, { paddingBottom: (lift > 0 ? 0 : insets.bottom) + space.lg }]}
+        >
           <View style={styles.handle} />
           <View style={styles.header}>
             <Txt variant="section" style={styles.flex}>

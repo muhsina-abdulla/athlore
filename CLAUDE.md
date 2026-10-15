@@ -19,7 +19,17 @@ Product docs (read these before you build a feature):
   - Theme tokens in `src/theme/tokens.ts`, and components in `src/components/`.
   - Inter fonts via `@expo-google-fonts/inter`.
   - Icons come from `@react-native-vector-icons/material-icons`, because `@expo/vector-icons` is being deprecated.
-  - Screens are empty states until the local database exists.
+  - The local database works: expo-sqlite + Drizzle (stable `drizzle-orm`, not the `rc` tag), schema in `src/db/schema.ts`, migrations generated with `npx drizzle-kit generate` into `src/db/migrations/`. Log (with draft autosave), History, Home and Session detail/edit read and write it. Session logic lives in `src/features/sessions/`.
+  - Drizzle's Expo SQLite transactions are **synchronous**: callbacks must be sync and end every statement in `.run()`. An async callback commits after its first statement. See docs/architecture.md.
+  - Exercises work: a seeded master list (44, by muscle group) plus custom ones, a picker sheet with search and recently used, and a set table per exercise (weight, +load, bodyweight, time or distance, a Top set marker, notes).
+  - Supabase: the schema, privacy rules and defaults are written and tested (`supabase/migrations/`, run in order in the Supabase SQL editor). Regenerate the defaults migration with `node scripts/gen-supabase-seed.mjs` after changing `src/db/defaults.ts`. Never re-run `20261014000100_seed_defaults.sql` after the table rename; it refers to the old table name. The app does not talk to Supabase yet.
+  - Table names: `user_session_types` (the athlete's session types, defaults plus custom) and `session_type_assignments` (which types a session has). The TypeScript names are `sessionTypes` and `sessionTypeAssignments`.
+  - Categories and session types: the defaults are chips; everything else lives behind an "Other" chip in a sheet (pick, add, remove), and a custom entry shows as a chip only while selected. A custom entry that a (non-deleted) session still uses can't be removed. Removal is a soft delete.
+  - Dates: the training date uses our own calendar sheet (`DatePickerSheet`, Monday-first, no future days), not the system dialog, so it matches the app's colours.
+  - Set rows have a "×" count for identical sets. They are saved as one row per set and folded back into one row when a saved session is opened. A repeated row can't be the top set.
+  - Deleting a session is a soft delete (the row, its exercises and sets are kept, hidden from history and analytics).
+  - Keyboard: `StackScreen` uses `KeyboardScrollView`, which scrolls the focused field above the keyboard (also as multi-line text grows). `TextField` registers itself with it. `ConfirmDialog` replaces system alerts.
+  - Not built yet: Google sign-in, the Supabase client and sync worker (saved sessions stay "Waiting to sync"), the legacy migration script, History search and filters, milestones.
 - The architecture is decided. See [docs/architecture.md](docs/architecture.md): local-first SQLite (expo-sqlite + Drizzle), Supabase backend, a hand-rolled outbox for sync, Zustand only for sync status, and an EAS dev build (not Expo Go) for native Google sign-in. The AI provider is still open until Phase 5, so **don't pick one silently.**
 - ESLint is configured (`eslint.config.js`, eslint-config-expo).
 
@@ -65,8 +75,9 @@ What the legacy CSV actually looks like (about 60 rows, April 2025 onward):
 
 ## Settled product decisions (details in docs/architecture.md)
 
-- **Rating:** stored as 1–10 and shown as 5 stars with half-stars. New entries save 2, 4, … 10. Legacy values keep their original numbers.
-- **Mood:** new entries use `mood_scale` 1–5 (Drained/Flat/Okay/Good/Great). Legacy text goes verbatim into `mood_text`. Neither field is ever derived from the other.
+- **Rating:** stored as 1–10 and shown as 5 stars; each point is half a star, and either half of a star can be tapped. Legacy values keep their original numbers.
+- **Mood:** new entries use `mood_scale` 1–5 (Rough/Low/Okay/Good/Great, how the athlete felt emotionally, not physically). Legacy text goes verbatim into `mood_text`. Neither field is ever derived from the other.
+- **Defaults:** categories are Grappling, Kickboxing, Boxing, Weight Training. Session types are Technique Drill, Sparring, Rolling, Cardio/Games, Competition Prep. Both live in `src/db/defaults.ts` with fixed ids; old defaults are renamed in place or hidden when unused (`src/db/seed.ts`).
 - **Category on migrated sessions:** nullable only when `source = 'legacy'` (a CHECK constraint enforces it). The user can tag them later from History.
 - **Exercise sets:** each set has a `kind` (`reps_weight`, `added_load`, `bodyweight`, `time`, `distance`) with nullable value columns.
 
@@ -99,7 +110,7 @@ The designs are not final and evolve while we build. Treat them as direction, no
   - an empty state, "Log your first session"
 - **Log session:**
   - Header shows a "Draft saved" indicator. The date picker defaults to today.
-  - Category chips with "+ Custom", and a training focus text input.
+  - Category chips ending with "Other" (type a new category), and a training focus text input.
   - Duration chips (1 / 1.5 / 2 / 2.5 / 3 hr / Other). Session type chips are multi-select.
   - Then "Add details (optional)": collapsible sections for Techniques learned, Self-assessment, Coach feedback, Injury or discomfort, Rating and mood, What I'm proud of, What to improve, and Exercises.
   - The keyboard toolbar steps through fields ("Next: Injury or discomfort ›").

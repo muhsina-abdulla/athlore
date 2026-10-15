@@ -60,7 +60,7 @@ scripts/migrate/        legacy CSV → Supabase (local only)
 
 ## Data model
 
-Every synced table has `id uuid` (generated on the client), `user_id`, `created_at`, `updated_at` (set by a server trigger) and `deleted_at` (soft delete, so deletions sync). Postgres and SQLite carry the same columns.
+Every synced table has `id uuid` (generated on the client), `user_id` (server only: the local database does not store it, and the server sets it from the signed-in user), `created_at`, `updated_at` (set by a server trigger) and `deleted_at` (soft delete, so deletions sync). Postgres and SQLite carry the same columns.
 
 ### Sessions
 
@@ -77,17 +77,27 @@ Every synced table has `id uuid` (generated on the client), `user_id`, `created_
 - `submitted_at`: the moment the entry was first submitted, separate from `training_date` and `created_at`
 
 **Related tables**
-- `categories` (`name`) and `session_types` (`name`): seeded defaults plus custom entries
-- `session_session_types` (`session_id`, `session_type_id`): many-to-many
+- `categories` (`name`) and `user_session_types` (`name`): the shared defaults plus the athlete's own entries
+- `session_type_assignments` (`session_id`, `session_type_id`): which types a session has (many-to-many)
 
 ### Exercises
 
 **Tables**
-- `exercises`: the library (`name`, `is_custom`)
+- `exercises`: the library (`name`, `is_custom`, `muscle_group`, `default_kind`). A master list ships with the app (fixed ids, in `src/db/defaultExercises.ts`); the athlete adds custom ones on top. Names are unique regardless of letter case, so typing a master exercise name picks the master one.
 - `session_exercises` (`session_id`, `exercise_id`, `position`, `notes`)
 - `exercise_sets`:
   - `session_exercise_id`, `position`, `kind`, `is_top`
   - value columns, all nullable: `reps`, `weight`, `weight_unit`, `added_load`, `duration_seconds`, `distance_m`
+
+**How the form maps to it:** the log form keeps each set as `reps` plus one "main number" (`amount`), and the exercise's kind decides which column that number is saved to (weight, added load, seconds or metres). A session's exercises are saved as a whole list: saving replaces the previous list (sets go with their exercise via cascade), and sets with nothing entered are dropped.
+
+**Repeated sets:** a row in the set table can carry a count ("× 3"). On save it becomes that many identical set rows (the first keeps the row's id, the others get new ones), capped at 20; a repeated row is never a top set. When a saved session is opened, consecutive identical sets (same reps and number, none top) fold back into one row. Nothing about the count is stored.
+
+**Removing categories and session types:** only entries that no non-deleted session uses can be removed, and removal is a soft delete that syncs. Sessions that were themselves deleted do not block it, and they keep pointing at the removed entry, so history stays intact. Retired defaults are shared server rows (`user_id` is null) that the app is not allowed to update, so the sync worker must never push a soft delete for a default id; the "update defaults" migration hides them on the server.
+
+**Deleting a session** is a soft delete: the session, its exercises and its sets stay in the database with `deleted_at` set on the session, and the deletion is queued so the server hides it too.
+
+**Sync note:** because exercises and sets are replaced as a whole, the sync worker must replace a session's children on the server too (delete the ones no longer present, upsert the rest), not only upsert.
 
 **Set kinds** (`kind`)
 
@@ -126,11 +136,11 @@ Every synced table has `id uuid` (generated on the client), `user_id`, `created_
 ### Product decisions settled here
 
 - **Rating**
-  - Stored as 1–10 and shown as 5 stars with half-stars (`rating / 2`).
-  - New entries save whole stars as 2, 4, … 10.
+  - Stored as 1–10 and shown as 5 stars. Each point is half a star (7 = three and a half stars), and either half of a star can be tapped.
+  - Tapping the current value again clears the rating.
   - Legacy values keep their original numbers.
 - **Mood**
-  - New entries use `mood_scale`: 1 Drained, 2 Flat, 3 Okay, 4 Good, 5 Great.
+  - New entries use `mood_scale`: 1 Rough, 2 Low, 3 Okay, 4 Good, 5 Great. These describe emotional mood, not tiredness. Only the labels live in the app, so they can change without touching saved data.
   - Legacy mood goes verbatim into `mood_text` with `mood_scale = null`.
   - Neither field is ever derived from the other.
 - **Category on migrated rows**
@@ -140,21 +150,29 @@ Every synced table has `id uuid` (generated on the client), `user_id`, `created_
 
 ## Drafts and submission flow
 
-1. **Open Log.** Create (or resume) a `drafts` row with a fresh `target_session_id` UUID. That UUID is the session's ID for life.
-2. **Typing.** Debounced (~500 ms) writes of the form state into `drafts.payload`. The header shows "Draft saved".
+1. **Open Log.** Create (or resume) a `drafts` row keyed by a fresh session UUID. That UUID is the session's ID for life.
+2. **Typing.** Debounced (~500 ms) writes of the form state into `drafts.payload`. Also written when the app goes to the background and when the screen closes. The header shows "Draft saved". An untouched form never becomes a draft.
 3. **Save session.** In one SQLite transaction:
-   - write the session and its child rows
-   - enqueue outbox entries
-   - mark the draft `pending_sync` (it is kept, not deleted)
+   - upsert the session and replace its session types
+   - enqueue an outbox entry (one per entity, so saving again replaces it)
+   - delete the draft
+
+   The transaction is all-or-nothing. If it fails, nothing is written and the draft is untouched.
+   From here the session is a local row with `submitted_at = null` and a pending outbox entry. History shows it as "Waiting to sync". It is not submitted yet, and it is recoverable and editable.
 4. **Push.** The worker upserts to Supabase `on conflict (id)`, so a retry can't duplicate anything.
 5. **Server acknowledgement.**
    - Set `submitted_at` (on first submit).
-   - Delete the outbox entries.
-   - Delete the draft.
+   - Delete the outbox entry.
    - Only now is the session considered submitted.
-6. **Failure.** The entry stays `failed` with `last_error`. History shows "Couldn't sync · Retry" and the draft is still recoverable.
+6. **Failure.** The outbox entry stays `failed` with `last_error`. History shows "Couldn't sync · Retry" and nothing is lost.
+
+Editing an existing session autosaves a draft only once the form differs from the saved version, and offers to continue it next time the session is opened.
+
+**Implementation note:** the Expo SQLite driver in Drizzle runs transactions synchronously and commits as soon as the callback returns. Transaction callbacks must therefore be synchronous and end each statement in `.run()`. An `async` callback would commit after its first statement.
 
 Edits follow the same path with the existing session ID. Deletes set `deleted_at` and enqueue an upsert.
+
+The default categories and session types use fixed UUIDs, seeded locally and on the server, so two devices never create duplicate defaults.
 
 ## Sync
 

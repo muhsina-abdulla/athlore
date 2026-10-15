@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1791981075958,
+      "tag": "0000_long_the_phantom",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791983677207,
+      "tag": "0001_small_magus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792089648055,
+      "tag": "0002_rename_session_type_tables",
+      "breakpoints": true
+    }
+  ]
+}
