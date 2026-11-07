@@ -44,6 +44,7 @@ function wordMatches(word: string): SQL {
       like(sessions.techniques),
       like(sessions.selfAssessment),
       like(sessions.coachFeedback),
+      like(sessions.coachName),
       like(sessions.injuryNotes),
       like(sessions.proudOf),
       like(sessions.toImprove),

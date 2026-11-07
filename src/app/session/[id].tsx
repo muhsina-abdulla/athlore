@@ -209,7 +209,7 @@ function SessionReadView({ session }: { session: SessionDetail }) {
 
       <TextBlock title="Techniques learned" text={session.techniques} />
       <TextBlock title="Self-assessment" text={session.selfAssessment} />
-      <TextBlock title="Coach feedback" text={session.coachFeedback} />
+      <CoachBlock name={session.coachName} text={session.coachFeedback} />
       <TextBlock title="Injury or discomfort" text={session.injuryNotes} danger />
 
       {session.rating !== null || mood || session.moodText ? (
@@ -256,6 +256,26 @@ function ExercisesBlock({ exercises }: { exercises: ExerciseEntry[] }) {
           <ExerciseTable key={exercise.id} exercise={exercise} />
         ))}
       </View>
+    </Card>
+  );
+}
+
+// Coach feedback shows who gave it. A name alone (no text) still shows.
+function CoachBlock({ name, text }: { name: string | null; text: string | null }) {
+  if (!name && !text) return null;
+  return (
+    <Card>
+      <Txt variant="label">Coach feedback</Txt>
+      {name ? (
+        <Txt variant="caption" color="textSecondary">
+          {`From ${name}`}
+        </Txt>
+      ) : null}
+      {text ? (
+        <Txt variant="body" color="textSecondary" style={styles.blockText}>
+          {text}
+        </Txt>
+      ) : null}
     </Card>
   );
 }

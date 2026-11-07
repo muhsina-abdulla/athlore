@@ -70,7 +70,7 @@ Every synced table has `id uuid` (generated on the client), `user_id` (server on
 - `training_focus`
 - `duration_minutes` *(int, nullable)*
 - `duration_raw` *(text, nullable)*: the legacy value, verbatim
-- `techniques`, `self_assessment`, `coach_feedback`, `injury_notes`, `proud_of`, `to_improve` *(text)*
+- `techniques`, `self_assessment`, `coach_feedback`, `coach_name`, `injury_notes`, `proud_of`, `to_improve` *(text)*
 - `rating` *(1–10, nullable)*
 - `mood_scale` *(1–5, nullable)*, `mood_text` *(nullable)*
 - `source` *(`app` | `legacy`)*

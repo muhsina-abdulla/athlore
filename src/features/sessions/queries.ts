@@ -219,6 +219,7 @@ export function sessionToForm(session: SessionDetail): SessionForm {
     techniques: session.techniques ?? '',
     selfAssessment: session.selfAssessment ?? '',
     coachFeedback: session.coachFeedback ?? '',
+    coachName: session.coachName ?? '',
     injuryNotes: session.injuryNotes ?? '',
     proudOf: session.proudOf ?? '',
     toImprove: session.toImprove ?? '',

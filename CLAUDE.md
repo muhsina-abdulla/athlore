@@ -41,7 +41,7 @@ Product docs (read these before you build a feature):
 **Sessions**
 - The training date is its own field, separate from `createdAt` and `submittedAt`. All history, sorting, and analytics use the **training date**.
 - One training day can hold several independent sessions. Analytics must keep **sessions** and **training days** apart.
-- Session fields: training date, category (required), training focus, duration, session types (**more than one allowed**), techniques/skills learned, self-assessment, coach feedback, injury/discomfort notes, self-rating, mood, what I'm proud of, what I need to improve.
+- Session fields: training date, category (required), training focus, duration, session types (**more than one allowed**), techniques/skills learned, self-assessment, coach feedback, coach name (optional, who gave the feedback), injury/discomfort notes, self-rating, mood, what I'm proud of, what I need to improve.
 - Category is required, but the user can choose an existing one or add their own. It is not a fixed enum.
 - Exercise-level detail (name, sets, reps, weight, weight unit, notes) is optional. It must never make quick logging slower.
 

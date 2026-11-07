@@ -50,6 +50,12 @@ export function sectionPreview(form: SessionForm, key: DetailKey): string | null
     const count = form.exercises.length;
     return count === 0 ? null : `${count} exercise${count === 1 ? '' : 's'}`;
   }
+  if (key === 'coachFeedback') {
+    const name = form.coachName.trim();
+    const line = firstLine(form.coachFeedback);
+    const parts = [name, line].filter((part) => part !== '');
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }
   const text = firstLine(form[key]);
   return text === '' ? null : text;
 }

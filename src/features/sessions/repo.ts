@@ -196,6 +196,7 @@ export async function saveSession(sessionId: string, form: SessionForm): Promise
       techniques: textOrNull(form.techniques),
       selfAssessment: textOrNull(form.selfAssessment),
       coachFeedback: textOrNull(form.coachFeedback),
+      coachName: textOrNull(form.coachName),
       injuryNotes: textOrNull(form.injuryNotes),
       proudOf: textOrNull(form.proudOf),
       toImprove: textOrNull(form.toImprove),
