@@ -163,6 +163,26 @@ export function SessionEditor({ form, onChange, openSection, onOpenSection }: Se
         </>
       );
     }
+    if (section.key === 'coachFeedback') {
+      return (
+        <>
+          <TextField
+            label="Coach"
+            value={form.coachName}
+            onChangeText={(coachName) => onChange({ coachName })}
+            returnKeyType="done"
+          />
+          {/* The keyboard opens here: the feedback is what you came to write. */}
+          <TextField
+            label="Feedback"
+            value={form.coachFeedback}
+            onChangeText={(coachFeedback) => onChange({ coachFeedback })}
+            multiline
+            autoFocus
+          />
+        </>
+      );
+    }
     return textSection(section.key, section.placeholder ?? '');
   };
 

@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { SearchField } from '@/components/SearchField';
 import { SessionCard } from '@/components/SessionCard';
-import { Button, Card, Chip, SectionTitle, TabScreen, Txt } from '@/components/ui';
+import { Button, Card, Chip, Icon, SectionTitle, TabScreen, Txt } from '@/components/ui';
 import { CategoryFilterSheet } from '@/features/sessions/CategoryFilterSheet';
 import { DateRangeSheet } from '@/features/sessions/DateRangeSheet';
 import { formatDuration } from '@/features/sessions/formState';
@@ -17,13 +17,14 @@ import {
 } from '@/features/sessions/historyFilter';
 import {
   useCategories,
+  useDeletedSessions,
   useDrafts,
   useSessionRows,
   type SessionRow,
 } from '@/features/sessions/queries';
 import { resumeDraft } from '@/features/sessions/resume';
 import { formatDay } from '@/lib/dates';
-import { space } from '@/theme/tokens';
+import { size, space } from '@/theme/tokens';
 
 const SEARCH_DELAY_MS = 250;
 
@@ -57,6 +58,7 @@ export default function HistoryScreen() {
 
   const rows = useSessionRows(filters);
   const drafts = useDrafts();
+  const deletedCount = useDeletedSessions().length;
   const categories = useCategories();
   const groups = groupByDay(rows);
 
@@ -180,6 +182,17 @@ export default function HistoryScreen() {
         </View>
       ))}
 
+      {deletedCount > 0 && !filtering ? (
+        <Card onPress={() => router.push('/deleted')} accessibilityLabel="Open recently deleted sessions">
+          <View style={styles.deletedRow}>
+            <Txt variant="bodySm" color="textSecondary" style={styles.flex}>
+              {`Recently deleted · ${deletedCount}`}
+            </Txt>
+            <Icon name="chevron-right" size={size.iconLg} />
+          </View>
+        </Card>
+      ) : null}
+
       <CategoryFilterSheet
         visible={categorySheet}
         onClose={() => setCategorySheet(false)}
@@ -209,4 +222,5 @@ const styles = StyleSheet.create({
     marginBottom: space.md,
   },
   draftRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  deletedRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 });

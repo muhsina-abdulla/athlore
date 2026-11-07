@@ -24,7 +24,7 @@ export type DetailSection = {
 export const DETAIL_SECTIONS: readonly DetailSection[] = [
   { key: 'techniques', title: 'Techniques learned', placeholder: 'Techniques or skills you worked on' },
   { key: 'selfAssessment', title: 'Self-assessment', placeholder: 'How did it go?' },
-  { key: 'coachFeedback', title: 'Coach feedback', placeholder: 'What your coach said' },
+  { key: 'coachFeedback', title: 'Coach feedback' },
   { key: 'injuryNotes', title: 'Injury or discomfort', tone: 'danger', placeholder: 'Any pain or discomfort' },
   { key: 'ratingMood', title: 'Rating and mood', hint: 'Overall session impression' },
   { key: 'proudOf', title: "What I'm proud of", placeholder: 'A win from this session' },
@@ -49,6 +49,12 @@ export function sectionPreview(form: SessionForm, key: DetailKey): string | null
   if (key === 'exercises') {
     const count = form.exercises.length;
     return count === 0 ? null : `${count} exercise${count === 1 ? '' : 's'}`;
+  }
+  if (key === 'coachFeedback') {
+    const name = form.coachName.trim();
+    const line = firstLine(form.coachFeedback);
+    const parts = [name, line].filter((part) => part !== '');
+    return parts.length > 0 ? parts.join(' · ') : null;
   }
   const text = firstLine(form[key]);
   return text === '' ? null : text;

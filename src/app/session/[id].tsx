@@ -141,7 +141,7 @@ export default function SessionDetailScreen() {
         <ConfirmDialog
           visible={confirmingDelete}
           title="Delete this session?"
-          message="You can't undo this."
+          message="It moves to Recently deleted in History, where you can restore it."
           confirmLabel="Delete session"
           destructive
           onConfirm={performDelete}
@@ -209,7 +209,7 @@ function SessionReadView({ session }: { session: SessionDetail }) {
 
       <TextBlock title="Techniques learned" text={session.techniques} />
       <TextBlock title="Self-assessment" text={session.selfAssessment} />
-      <TextBlock title="Coach feedback" text={session.coachFeedback} />
+      <CoachBlock name={session.coachName} text={session.coachFeedback} />
       <TextBlock title="Injury or discomfort" text={session.injuryNotes} danger />
 
       {session.rating !== null || mood || session.moodText ? (
@@ -260,6 +260,33 @@ function ExercisesBlock({ exercises }: { exercises: ExerciseEntry[] }) {
   );
 }
 
+// The feedback in full, signed by the coach underneath. With a name but no
+// feedback there is nothing to sign, so the name is shown on its own.
+function CoachBlock({ name, text }: { name: string | null; text: string | null }) {
+  if (!name && !text) return null;
+  return (
+    <Card>
+      <Txt variant="label">Coach feedback</Txt>
+      {text ? (
+        <>
+          <Txt variant="body" color="textSecondary" style={styles.blockText}>
+            {text}
+          </Txt>
+          {name ? (
+            <Txt variant="signature" color="textSecondary" style={styles.signature}>
+              {`\u2013 ${name}`}
+            </Txt>
+          ) : null}
+        </>
+      ) : (
+        <Txt variant="body" color="textSecondary" style={styles.blockText}>
+          {`Coach: ${name}`}
+        </Txt>
+      )}
+    </Card>
+  );
+}
+
 function TextBlock({ title, text, danger }: { title: string; text: string | null; danger?: boolean }) {
   if (!text) return null;
   return (
@@ -281,5 +308,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   rating: { gap: space.sm, paddingTop: space.sm },
   blockText: { paddingTop: space.sm },
+  signature: { alignSelf: 'flex-end', paddingTop: space.md },
   exercises: { gap: space.lg, paddingTop: space.md },
 });

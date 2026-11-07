@@ -196,6 +196,7 @@ export async function saveSession(sessionId: string, form: SessionForm): Promise
       techniques: textOrNull(form.techniques),
       selfAssessment: textOrNull(form.selfAssessment),
       coachFeedback: textOrNull(form.coachFeedback),
+      coachName: textOrNull(form.coachName),
       injuryNotes: textOrNull(form.injuryNotes),
       proudOf: textOrNull(form.proudOf),
       toImprove: textOrNull(form.toImprove),
@@ -320,6 +321,63 @@ export async function createExercise(
     enqueue(tx, 'exercise', id);
   });
   return id;
+}
+
+// Brings a deleted session back. Its exercises and sets were never removed, so
+// they come back with it. If its category (or a session type it had) was removed
+// after the session was deleted, that is brought back too, so the session never
+// returns pointing at something that is hidden. Restoring a session that is not
+// deleted does nothing. Returns whether anything was restored.
+export async function restoreSession(sessionId: string): Promise<boolean> {
+  const session = db
+    .select({ categoryId: sessions.categoryId, deletedAt: sessions.deletedAt })
+    .from(sessions)
+    .where(eq(sessions.id, sessionId))
+    .get();
+  if (!session || session.deletedAt === null) return false;
+
+  const now = new Date();
+  const typeRows = db
+    .select({ id: sessionTypeAssignments.sessionTypeId })
+    .from(sessionTypeAssignments)
+    .where(eq(sessionTypeAssignments.sessionId, sessionId))
+    .all();
+
+  db.transaction((tx) => {
+    tx.update(sessions)
+      .set({ deletedAt: null, updatedAt: now })
+      .where(eq(sessions.id, sessionId))
+      .run();
+    enqueue(tx, 'session', sessionId);
+
+    if (session.categoryId) {
+      const category = tx
+        .select({ deletedAt: categories.deletedAt })
+        .from(categories)
+        .where(eq(categories.id, session.categoryId))
+        .get();
+      if (category && category.deletedAt !== null) {
+        tx.update(categories)
+          .set({ deletedAt: null, updatedAt: now })
+          .where(eq(categories.id, session.categoryId))
+          .run();
+        enqueue(tx, 'category', session.categoryId);
+      }
+    }
+
+    for (const { id } of typeRows) {
+      const type = tx
+        .select({ deletedAt: sessionTypes.deletedAt })
+        .from(sessionTypes)
+        .where(eq(sessionTypes.id, id))
+        .get();
+      if (type && type.deletedAt !== null) {
+        tx.update(sessionTypes).set({ deletedAt: null, updatedAt: now }).where(eq(sessionTypes.id, id)).run();
+        enqueue(tx, 'session_type', id);
+      }
+    }
+  });
+  return true;
 }
 
 // ---------- Removing custom categories and session types ----------

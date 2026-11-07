@@ -1,0 +1,1 @@
+ALTER TABLE `sessions` ADD `coach_name` text;

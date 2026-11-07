@@ -14,6 +14,7 @@ Each session should support:
 - Techniques or skills learned
 - Self-assessment
 - Coach feedback
+- Coach name (optional): which coach gave the feedback
 - Injury or discomfort notes
 - Self-rating
 - Mood

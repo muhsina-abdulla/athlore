@@ -60,6 +60,8 @@ export const sessions = sqliteTable(
     techniques: text('techniques'),
     selfAssessment: text('self_assessment'),
     coachFeedback: text('coach_feedback'),
+    // Who gave the feedback. Free text, so several coaches can be named.
+    coachName: text('coach_name'),
     injuryNotes: text('injury_notes'),
     proudOf: text('proud_of'),
     toImprove: text('to_improve'),

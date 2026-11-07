@@ -22,6 +22,13 @@
       "when": 1792089648055,
       "tag": "0002_rename_session_type_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794044509458,
+      "tag": "0003_clean_the_leader",
+      "breakpoints": true
     }
   ]
 }

@@ -36,6 +36,8 @@ export type SessionForm = {
   techniques: string;
   selfAssessment: string;
   coachFeedback: string;
+  // Which coach gave the feedback. Free text.
+  coachName: string;
   injuryNotes: string;
   proudOf: string;
   toImprove: string;
@@ -54,6 +56,7 @@ export function emptyForm(trainingDate: string): SessionForm {
     techniques: '',
     selfAssessment: '',
     coachFeedback: '',
+    coachName: '',
     injuryNotes: '',
     proudOf: '',
     toImprove: '',
@@ -74,6 +77,7 @@ export function hasContent(form: SessionForm): boolean {
     form.techniques.trim() !== '' ||
     form.selfAssessment.trim() !== '' ||
     form.coachFeedback.trim() !== '' ||
+    form.coachName.trim() !== '' ||
     form.injuryNotes.trim() !== '' ||
     form.proudOf.trim() !== '' ||
     form.toImprove.trim() !== '' ||

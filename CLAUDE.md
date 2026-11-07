@@ -29,7 +29,7 @@ Product docs (read these before you build a feature):
   - Categories and session types: the defaults are chips; everything else lives behind an "Other" chip in a sheet (pick, add, remove), and a custom entry shows as a chip only while selected. A custom entry that a (non-deleted) session still uses can't be removed. Removal is a soft delete.
   - Dates: the training date uses our own calendar sheet (`DatePickerSheet`, Monday-first, no future days), not the system dialog, so it matches the app's colours.
   - Set rows have a "×" count for identical sets. They are saved as one row per set and folded back into one row when a saved session is opened. A repeated row can't be the top set.
-  - Deleting a session is a soft delete (the row, its exercises and sets are kept, hidden from history and analytics).
+  - Deleting a session is a soft delete (the row, its exercises and sets are kept, hidden from history and analytics). Recently deleted (`src/app/deleted.tsx`) lists them with a Restore button; restoring also brings back a category or session type that was removed in the meantime. Nothing is ever purged automatically.
   - Keyboard: `StackScreen` uses `KeyboardScrollView`, which scrolls the focused field above the keyboard (also as multi-line text grows). `TextField` registers itself with it. `ConfirmDialog` replaces system alerts.
   - History search and filters work (`historyFilter.ts`): every typed word must appear somewhere in a session (focus, techniques, self-assessment, coach feedback, injury, proud of, to improve, mood text, category, session type or an exercise name); `%` and `_` are searched literally; deleted sessions never match. Filters also narrow by category (any of several) and by an inclusive training-date range with presets (this week, last 7 days, this month, last month, last 3 months) or custom dates. Drafts hide while filtering.
   - Not built yet: Google sign-in, the Supabase client and sync worker (saved sessions stay "Waiting to sync"), the legacy migration script, milestones.
@@ -41,7 +41,7 @@ Product docs (read these before you build a feature):
 **Sessions**
 - The training date is its own field, separate from `createdAt` and `submittedAt`. All history, sorting, and analytics use the **training date**.
 - One training day can hold several independent sessions. Analytics must keep **sessions** and **training days** apart.
-- Session fields: training date, category (required), training focus, duration, session types (**more than one allowed**), techniques/skills learned, self-assessment, coach feedback, injury/discomfort notes, self-rating, mood, what I'm proud of, what I need to improve.
+- Session fields: training date, category (required), training focus, duration, session types (**more than one allowed**), techniques/skills learned, self-assessment, coach feedback, coach name (optional, who gave the feedback), injury/discomfort notes, self-rating, mood, what I'm proud of, what I need to improve.
 - Category is required, but the user can choose an existing one or add their own. It is not a fixed enum.
 - Exercise-level detail (name, sets, reps, weight, weight unit, notes) is optional. It must never make quick logging slower.
 
@@ -127,7 +127,7 @@ The designs are not final and evolve while we build. Treat them as direction, no
 - **Session detail:**
   - A read view with a "Recorded at" time shown separately from the training date, plus all reflection sections and exercise tables.
   - An **Edit** mode that reuses the log form, with Save changes / Delete session.
-  - Delete asks "Delete this session? … You can't undo this."
+  - Delete asks "Delete this session?" and says it moves to Recently deleted, where it can be restored (History links to it).
 
 ## Working conventions
 
