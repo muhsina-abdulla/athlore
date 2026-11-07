@@ -13,8 +13,9 @@ import {
   ScrollView,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  type ScrollViewInstance,
   type StyleProp,
-  type TextInput,
+  type TextInputInstance,
   type ViewStyle,
 } from 'react-native';
 
@@ -22,7 +23,7 @@ import { space } from '@/theme/tokens';
 
 type KeyboardScroll = {
   // The input that has focus, so it can be kept above the keyboard.
-  setFocused: (input: TextInput | null) => void;
+  setFocused: (input: TextInputInstance | null) => void;
   // Scroll so the focused input's bottom edge sits above the keyboard.
   ensureVisible: () => void;
 };
@@ -43,9 +44,9 @@ type KeyboardScrollViewProps = {
 // A ScrollView that keeps the field being typed in above the keyboard. Tall text
 // boxes grow as you type, so it re-checks on every size change, not just on focus.
 export function KeyboardScrollView({ children, contentContainerStyle }: KeyboardScrollViewProps) {
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const scrollY = useRef(0);
-  const focused = useRef<TextInput | null>(null);
+  const focused = useRef<TextInputInstance | null>(null);
   const keyboardTop = useRef<number | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 

@@ -1,10 +1,20 @@
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { EmptyState } from '@/components/EmptyState';
+import { SearchField } from '@/components/SearchField';
 import { SessionCard } from '@/components/SessionCard';
-import { Card, SectionTitle, TabScreen, Txt } from '@/components/ui';
+import { Button, Card, Chip, SectionTitle, TabScreen, Txt } from '@/components/ui';
+import { CategoryFilterSheet } from '@/features/sessions/CategoryFilterSheet';
+import { DateRangeSheet } from '@/features/sessions/DateRangeSheet';
 import { formatDuration } from '@/features/sessions/formState';
+import {
+  formatRange,
+  hasActiveFilters,
+  NO_FILTERS,
+  type HistoryFilters,
+} from '@/features/sessions/historyFilter';
 import {
   useCategories,
   useDrafts,
@@ -14,6 +24,8 @@ import {
 import { resumeDraft } from '@/features/sessions/resume';
 import { formatDay } from '@/lib/dates';
 import { space } from '@/theme/tokens';
+
+const SEARCH_DELAY_MS = 250;
 
 type DayGroup = { date: string; sessions: SessionRow[] };
 
@@ -29,15 +41,73 @@ function groupByDay(rows: SessionRow[]): DayGroup[] {
 }
 
 export default function HistoryScreen() {
-  const rows = useSessionRows();
+  // What is typed, and what the list is actually filtered by. The list waits a
+  // moment after the last keystroke so it isn't rebuilt on every letter.
+  const [text, setText] = useState('');
+  const [filters, setFilters] = useState<HistoryFilters>(NO_FILTERS);
+  const [categorySheet, setCategorySheet] = useState(false);
+  const [dateSheet, setDateSheet] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters((f) => (f.query === text ? f : { ...f, query: text }));
+    }, SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [text]);
+
+  const rows = useSessionRows(filters);
   const drafts = useDrafts();
   const categories = useCategories();
   const groups = groupByDay(rows);
 
-  // TODO: search, category filter and date range once the list works end to end.
+  const filtering = hasActiveFilters(filters);
+  const categoryLabel =
+    filters.categoryIds.length === 0
+      ? 'Category'
+      : filters.categoryIds.length === 1
+        ? (categories.find((c) => c.id === filters.categoryIds[0])?.name ?? 'Category')
+        : `Category · ${filters.categoryIds.length}`;
+  const dateActive = filters.from !== null || filters.to !== null;
+
+  const clearAll = () => {
+    setText('');
+    setFilters(NO_FILTERS);
+  };
+
+  // Drafts aren't sessions yet, so they only show when nothing is being filtered.
+  const showDrafts = drafts.length > 0 && !filtering && text.trim() === '';
+
   return (
     <TabScreen title="History">
-      {drafts.length > 0 ? (
+      <View style={styles.controls}>
+        <SearchField
+          value={text}
+          onChangeText={setText}
+          placeholder="Search sessions, techniques, feedback"
+        />
+        <View style={styles.chips}>
+          <Chip
+            label={categoryLabel}
+            selected={filters.categoryIds.length > 0}
+            onPress={() => setCategorySheet(true)}
+          />
+          <Chip
+            label={dateActive ? formatRange(filters.from, filters.to) : 'Date'}
+            selected={dateActive}
+            onPress={() => setDateSheet(true)}
+          />
+          {filtering || text.trim() !== '' ? (
+            <Button title="Clear all" variant="quiet" onPress={clearAll} />
+          ) : null}
+        </View>
+        {filtering ? (
+          <Txt variant="caption" color="textSecondary">
+            {`${rows.length} ${rows.length === 1 ? 'session' : 'sessions'} found`}
+          </Txt>
+        ) : null}
+      </View>
+
+      {showDrafts ? (
         <View>
           <SectionTitle title="Drafts" />
           <View style={styles.list}>
@@ -76,7 +146,14 @@ export default function HistoryScreen() {
         </View>
       ) : null}
 
-      {groups.length === 0 && drafts.length === 0 ? (
+      {groups.length === 0 && filtering ? (
+        <EmptyState
+          message="No sessions match these filters."
+          action={{ label: 'Clear filters', onPress: clearAll }}
+        />
+      ) : null}
+
+      {groups.length === 0 && !filtering && !showDrafts ? (
         <EmptyState
           message="Your sessions will appear here, grouped by training day."
           action={{ label: 'Log a session', onPress: () => router.push('/log') }}
@@ -102,12 +179,28 @@ export default function HistoryScreen() {
           </View>
         </View>
       ))}
+
+      <CategoryFilterSheet
+        visible={categorySheet}
+        onClose={() => setCategorySheet(false)}
+        selectedIds={filters.categoryIds}
+        onChange={(categoryIds) => setFilters((f) => ({ ...f, categoryIds }))}
+      />
+      <DateRangeSheet
+        visible={dateSheet}
+        onClose={() => setDateSheet(false)}
+        from={filters.from}
+        to={filters.to}
+        onChange={(from, to) => setFilters((f) => ({ ...f, from, to }))}
+      />
     </TabScreen>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  controls: { gap: space.md },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   list: { gap: space.md },
   dayHeader: {
     flexDirection: 'row',

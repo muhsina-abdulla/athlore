@@ -5,6 +5,7 @@ import {
   View,
   type KeyboardTypeOptions,
   type ReturnKeyTypeOptions,
+  type TextInputInstance,
 } from 'react-native';
 
 import { useKeyboardScroll } from '@/components/KeyboardScrollView';
@@ -40,7 +41,7 @@ export function TextField({
   onFocus,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const keyboardScroll = useKeyboardScroll();
   return (
     <View style={styles.root}>

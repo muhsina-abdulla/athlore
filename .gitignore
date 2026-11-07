@@ -19,6 +19,10 @@ expo-env.d.ts
 *.xls
 *.csv
 
+# My personal checklist of queries and editor theme (kept local)
+/QUERIES.md
+/.vscode/
+
 # Native
 .kotlin/
 *.orig.*
