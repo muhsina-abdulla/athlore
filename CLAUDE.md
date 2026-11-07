@@ -31,7 +31,8 @@ Product docs (read these before you build a feature):
   - Set rows have a "×" count for identical sets. They are saved as one row per set and folded back into one row when a saved session is opened. A repeated row can't be the top set.
   - Deleting a session is a soft delete (the row, its exercises and sets are kept, hidden from history and analytics).
   - Keyboard: `StackScreen` uses `KeyboardScrollView`, which scrolls the focused field above the keyboard (also as multi-line text grows). `TextField` registers itself with it. `ConfirmDialog` replaces system alerts.
-  - Not built yet: Google sign-in, the Supabase client and sync worker (saved sessions stay "Waiting to sync"), the legacy migration script, History search and filters, milestones.
+  - History search and filters work (`historyFilter.ts`): every typed word must appear somewhere in a session (focus, techniques, self-assessment, coach feedback, injury, proud of, to improve, mood text, category, session type or an exercise name); `%` and `_` are searched literally; deleted sessions never match. Filters also narrow by category (any of several) and by an inclusive training-date range with presets (this week, last 7 days, this month, last month, last 3 months) or custom dates. Drafts hide while filtering.
+  - Not built yet: Google sign-in, the Supabase client and sync worker (saved sessions stay "Waiting to sync"), the legacy migration script, milestones.
 - The architecture is decided. See [docs/architecture.md](docs/architecture.md): local-first SQLite (expo-sqlite + Drizzle), Supabase backend, a hand-rolled outbox for sync, Zustand only for sync status, and an EAS dev build (not Expo Go) for native Google sign-in. The AI provider is still open until Phase 5, so **don't pick one silently.**
 - ESLint is configured (`eslint.config.js`, eslint-config-expo).
 

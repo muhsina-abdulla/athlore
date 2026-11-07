@@ -23,6 +23,11 @@ import {
   type SessionForm,
   type SetEntry,
 } from '@/features/sessions/formState';
+import {
+  buildHistoryWhere,
+  NO_FILTERS,
+  type HistoryFilters,
+} from '@/features/sessions/historyFilter';
 import { todayKey } from '@/lib/dates';
 
 // Defaults first, in the order they are defined; custom entries after, in the order
@@ -78,7 +83,7 @@ function toSyncStatus(status: 'pending' | 'in_flight' | 'failed' | null): SyncSt
 
 // Newest training day first; within a day, newest entry first. Sorted by the
 // training date, never by when the entry was created or submitted.
-export function useSessionRows(): SessionRow[] {
+export function useSessionRows(filters: HistoryFilters = NO_FILTERS): SessionRow[] {
   const { data } = useLiveQuery(
     db
       .select({
@@ -94,8 +99,10 @@ export function useSessionRows(): SessionRow[] {
       .from(sessions)
       .leftJoin(categories, eq(categories.id, sessions.categoryId))
       .leftJoin(outbox, and(eq(outbox.entity, 'session'), eq(outbox.entityId, sessions.id)))
-      .where(isNull(sessions.deletedAt))
+      .where(buildHistoryWhere(filters))
       .orderBy(desc(sessions.trainingDate), desc(sessions.createdAt)),
+    // The live query is rebuilt whenever a filter changes.
+    [filters.query, filters.categoryIds.join(','), filters.from, filters.to],
   );
   return data.map(({ outboxStatus, ...row }) => ({ ...row, sync: toSyncStatus(outboxStatus) }));
 }
