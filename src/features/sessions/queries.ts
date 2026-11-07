@@ -1,4 +1,4 @@
-import { and, asc, between, desc, eq, isNull, max, sql } from 'drizzle-orm';
+import { and, asc, between, desc, eq, isNotNull, isNull, max, sql } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 
 import { db } from '@/db/client';
@@ -293,4 +293,35 @@ export function useRecentExerciseIds(limit = 6): string[] {
     [limit],
   );
   return data.map((r) => r.exerciseId);
+}
+
+// ---------- Recently deleted ----------
+
+export type DeletedSessionRow = {
+  id: string;
+  trainingDate: string;
+  categoryName: string | null;
+  trainingFocus: string | null;
+  deletedAt: Date;
+};
+
+// Sessions that were deleted, most recently deleted first. They are kept, not
+// erased, so they can be restored.
+export function useDeletedSessions(): DeletedSessionRow[] {
+  const { data } = useLiveQuery(
+    db
+      .select({
+        id: sessions.id,
+        trainingDate: sessions.trainingDate,
+        categoryName: categories.name,
+        trainingFocus: sessions.trainingFocus,
+        deletedAt: sessions.deletedAt,
+      })
+      .from(sessions)
+      .leftJoin(categories, eq(categories.id, sessions.categoryId))
+      .where(isNotNull(sessions.deletedAt))
+      .orderBy(desc(sessions.deletedAt)),
+  );
+  // The query only returns rows with a deletion time; narrow the type to match.
+  return data.flatMap((row) => (row.deletedAt ? [{ ...row, deletedAt: row.deletedAt }] : []));
 }

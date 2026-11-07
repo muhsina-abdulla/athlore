@@ -141,7 +141,7 @@ export default function SessionDetailScreen() {
         <ConfirmDialog
           visible={confirmingDelete}
           title="Delete this session?"
-          message="You can't undo this."
+          message="It moves to Recently deleted in History, where you can restore it."
           confirmLabel="Delete session"
           destructive
           onConfirm={performDelete}
