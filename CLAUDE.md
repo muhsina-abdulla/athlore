@@ -13,7 +13,9 @@ Product docs (read these before you build a feature):
 ## Current state
 
 - Phase 1 (foundation) is done. **Phase 2 (core training journal) is next**: Google auth, session create/edit, drafts, sync, history.
-- The stack is Expo SDK 57, React Native 0.86, React 19.2, and TypeScript 6 in strict mode. The package manager is **npm** (`package-lock.json`), so use `npx`, not `bunx`.
+- The stack is Expo SDK 58, React Native 0.88, React 19.3, and TypeScript 6 in strict mode. The package manager is **npm** (`package-lock.json`), so use `npx`, not `bunx`. SDK 58 needs Node 22.13+ (or 24.3+).
+- The installed Expo Go app must match the project's SDK. We upgraded from 57 to 58 because Expo Go moved to 58; the next upgrade follows the same steps (`npx expo install expo@^N.0.0 --fix`, then `npx expo-doctor`). If npm refuses with an ERESOLVE conflict on an optional peer such as `@expo/ui`, delete `node_modules` and `package-lock.json` and run `npm install` instead of forcing it.
+- SDK 58 specifics: refs use React Native's instance types (`ViewInstance`, `ScrollViewInstance`, `TextInputInstance`), and a custom tab bar receives `emitter` and `navigateToTab` (no `navigation`), as in `src/components/TabBar.tsx`.
 - The app shell is in place:
   - Expo Router with routes in `src/app/`: four tabs (`index`, `history`, `progress`, `insights`) using `Tabs` from `expo-router/js-tabs`, plus `log` and `session/[id]`.
   - Theme tokens in `src/theme/tokens.ts`, and components in `src/components/`.

@@ -6,7 +6,7 @@ How Athlore is built, and why. Product intent lives in [vision.md](vision.md) an
 
 | Area | Decision |
 | --- | --- |
-| App | Expo SDK 57, React Native, TypeScript strict, **Expo Router** (routes in `src/app/`) |
+| App | Expo SDK 58, React Native 0.88, TypeScript strict, **Expo Router** (routes in `src/app/`) |
 | Build | **EAS development build** from Phase 2 onward (needed for native Google sign-in). Expo Go is no longer the target. |
 | Local storage | **SQLite** (`expo-sqlite`) + **Drizzle ORM**. The local DB is the source of truth for the UI. |
 | Backend | **Supabase**: Postgres, Google auth, Row Level Security, Edge Functions (AI, later) |

@@ -14,15 +14,15 @@ const TAB_META: Record<string, { label: string; icon: IconName }> = {
 
 // Home · History · [Log] · Progress · Insights. Log isn't a tab: it opens the
 // log screen, which slides up over the tabs.
-export function TabBar({ state, navigation, insets }: BottomTabBarProps) {
+export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarProps) {
   const tabs = state.routes.map((route, index) => {
     const meta = TAB_META[route.name];
     if (!meta) return null;
     const focused = state.index === index;
 
     const onPress = () => {
-      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-      if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+      const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+      if (!focused && !event.defaultPrevented) navigateToTab(route.key);
     };
 
     return (

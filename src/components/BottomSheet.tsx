@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Keyboard,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type ViewInstance,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, Txt } from '@/components/ui';
@@ -15,7 +23,7 @@ type BottomSheetProps = {
 
 export function BottomSheet({ visible, onClose, title, children, footer }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
-  const sheetRef = useRef<View>(null);
+  const sheetRef = useRef<ViewInstance>(null);
   // How far the sheet is lifted so the keyboard doesn't cover it. A modal gets no
   // help from the screen behind it, so it measures how much the keyboard covers
   // and rises by exactly that (nothing if the window already made room).
