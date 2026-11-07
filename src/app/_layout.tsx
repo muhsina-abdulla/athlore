@@ -1,5 +1,6 @@
 import {
   Inter_400Regular,
+  Inter_400Regular_Italic,
   Inter_500Medium,
   Inter_600SemiBold,
   Inter_700Bold,
@@ -31,6 +32,7 @@ const navTheme: Theme = {
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     Inter_400Regular,
+    Inter_400Regular_Italic,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,

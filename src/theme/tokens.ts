@@ -79,6 +79,7 @@ export const opacity = {
 
 export const fonts = {
   regular: 'Inter_400Regular',
+  italic: 'Inter_400Regular_Italic',
   medium: 'Inter_500Medium',
   semibold: 'Inter_600SemiBold',
   bold: 'Inter_700Bold',
@@ -92,6 +93,8 @@ export const type = {
   bodySm: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20 },
   label: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 20 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
+  // A quiet slanted line, such as a coach signing their feedback.
+  signature: { fontFamily: fonts.italic, fontSize: 13, lineHeight: 18 },
   micro: { fontFamily: fonts.medium, fontSize: 11, lineHeight: 14 },
   overline: { fontFamily: fonts.semibold, fontSize: 12, lineHeight: 16, letterSpacing: 0.6 },
 } as const;

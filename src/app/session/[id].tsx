@@ -260,22 +260,29 @@ function ExercisesBlock({ exercises }: { exercises: ExerciseEntry[] }) {
   );
 }
 
-// Coach feedback shows who gave it. A name alone (no text) still shows.
+// The feedback in full, signed by the coach underneath. With a name but no
+// feedback there is nothing to sign, so the name is shown on its own.
 function CoachBlock({ name, text }: { name: string | null; text: string | null }) {
   if (!name && !text) return null;
   return (
     <Card>
       <Txt variant="label">Coach feedback</Txt>
-      {name ? (
-        <Txt variant="caption" color="textSecondary">
-          {`From ${name}`}
-        </Txt>
-      ) : null}
       {text ? (
+        <>
+          <Txt variant="body" color="textSecondary" style={styles.blockText}>
+            {text}
+          </Txt>
+          {name ? (
+            <Txt variant="signature" color="textSecondary" style={styles.signature}>
+              {`\u2013 ${name}`}
+            </Txt>
+          ) : null}
+        </>
+      ) : (
         <Txt variant="body" color="textSecondary" style={styles.blockText}>
-          {text}
+          {`Coach: ${name}`}
         </Txt>
-      ) : null}
+      )}
     </Card>
   );
 }
@@ -301,5 +308,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   rating: { gap: space.sm, paddingTop: space.sm },
   blockText: { paddingTop: space.sm },
+  signature: { alignSelf: 'flex-end', paddingTop: space.md },
   exercises: { gap: space.lg, paddingTop: space.md },
 });

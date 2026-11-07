@@ -166,13 +166,19 @@ export function SessionEditor({ form, onChange, openSection, onOpenSection }: Se
     if (section.key === 'coachFeedback') {
       return (
         <>
-          {textSection('coachFeedback', section.placeholder ?? '')}
           <TextField
-            label="Coach name"
+            label="Coach"
             value={form.coachName}
             onChangeText={(coachName) => onChange({ coachName })}
-            placeholder="Which coach? (optional)"
             returnKeyType="done"
+          />
+          {/* The keyboard opens here: the feedback is what you came to write. */}
+          <TextField
+            label="Feedback"
+            value={form.coachFeedback}
+            onChangeText={(coachFeedback) => onChange({ coachFeedback })}
+            multiline
+            autoFocus
           />
         </>
       );

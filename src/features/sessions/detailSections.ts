@@ -24,7 +24,7 @@ export type DetailSection = {
 export const DETAIL_SECTIONS: readonly DetailSection[] = [
   { key: 'techniques', title: 'Techniques learned', placeholder: 'Techniques or skills you worked on' },
   { key: 'selfAssessment', title: 'Self-assessment', placeholder: 'How did it go?' },
-  { key: 'coachFeedback', title: 'Coach feedback', placeholder: 'What your coach said' },
+  { key: 'coachFeedback', title: 'Coach feedback' },
   { key: 'injuryNotes', title: 'Injury or discomfort', tone: 'danger', placeholder: 'Any pain or discomfort' },
   { key: 'ratingMood', title: 'Rating and mood', hint: 'Overall session impression' },
   { key: 'proudOf', title: "What I'm proud of", placeholder: 'A win from this session' },
