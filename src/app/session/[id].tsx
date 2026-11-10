@@ -25,7 +25,7 @@ import { SessionEditor } from '@/features/sessions/SessionEditor';
 import { useDraftAutosave } from '@/features/sessions/useDraftAutosave';
 import { formatLongDay, formatTime } from '@/lib/dates';
 import { useKeyboardVisible } from '@/lib/useKeyboardVisible';
-import { size, space } from '@/theme/tokens';
+import { colors, size, space } from '@/theme/tokens';
 
 export default function SessionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -289,11 +289,26 @@ function CoachBlock({ name, text }: { name: string | null; text: string | null }
 
 function TextBlock({ title, text, danger }: { title: string; text: string | null; danger?: boolean }) {
   if (!text) return null;
+  // An injury note stands out as a softly tinted, outlined card with a warning icon.
+  // The note itself stays in the normal text colour so it is easy to read.
+  if (danger) {
+    return (
+      <Card style={styles.injuryCard}>
+        <View style={styles.injuryHeader}>
+          <Icon name="warning-amber" size={size.iconLg} color="danger" />
+          <Txt variant="label" color="danger">
+            {title}
+          </Txt>
+        </View>
+        <Txt variant="body" style={styles.blockText}>
+          {text}
+        </Txt>
+      </Card>
+    );
+  }
   return (
     <Card>
-      <Txt variant="label" color={danger ? 'danger' : 'text'}>
-        {title}
-      </Txt>
+      <Txt variant="label">{title}</Txt>
       <Txt variant="body" color="textSecondary" style={styles.blockText}>
         {text}
       </Txt>
@@ -308,6 +323,13 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   rating: { gap: space.sm, paddingTop: space.sm },
   blockText: { paddingTop: space.sm },
-  signature: { alignSelf: 'flex-end', paddingTop: space.md },
+  // Full width and right-aligned (not shrink-wrapped), so the whole name always shows.
+  signature: { textAlign: 'right', paddingTop: space.md },
+  injuryCard: {
+    backgroundColor: colors.dangerSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.dangerBorder,
+  },
+  injuryHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   exercises: { gap: space.lg, paddingTop: space.md },
 });
