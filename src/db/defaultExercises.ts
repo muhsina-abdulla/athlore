@@ -33,6 +33,7 @@ export const DEFAULT_EXERCISES: readonly {
   { id: 'ab49ef3b-31a9-4e66-ace6-10fac08693f8', name: 'Push-up', muscleGroup: 'Chest', defaultKind: 'bodyweight' },
   { id: '9c9602d7-6757-4cbe-9068-d74e4db1cfb7', name: 'Bent-over row', muscleGroup: 'Back', defaultKind: 'reps_weight' },
   { id: 'd7036235-d22e-4e07-9452-293500950241', name: 'Pull-up', muscleGroup: 'Back', defaultKind: 'bodyweight' },
+  { id: '9e6dcbc2-02b6-46ed-bff7-c9d271679a61', name: 'Assisted pull-up', muscleGroup: 'Back', defaultKind: 'reps_weight' },
   { id: 'c4e05784-7a51-43f3-ad76-dcf69a13b179', name: 'Lat pulldown', muscleGroup: 'Back', defaultKind: 'reps_weight' },
   { id: '03c8def8-ce10-4461-ac18-55db64533d9b', name: 'Seated row', muscleGroup: 'Back', defaultKind: 'reps_weight' },
   { id: 'd8f57631-0e16-49fa-ab58-74065b828f3e', name: 'Deadlift', muscleGroup: 'Back', defaultKind: 'reps_weight' },

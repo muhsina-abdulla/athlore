@@ -26,6 +26,14 @@ export const colors = {
 
 export type ColorName = keyof typeof colors;
 
+// Google's own logo colours. Only for the Google "G"; never for app UI.
+export const googleBrand = {
+  red: '#EA4335',
+  blue: '#4285F4',
+  yellow: '#FBBC05',
+  green: '#34A853',
+} as const;
+
 export const space = {
   xxs: 2,
   xs: 4,
@@ -56,6 +64,7 @@ export const size = {
   iconSm: 18,
   iconXl: 32,
   emptyTile: 72,
+  brandMark: 96,
   star: 28,
   starInput: 40,
   dialogMax: 360,

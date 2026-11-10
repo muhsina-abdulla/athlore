@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { SearchField } from '@/components/SearchField';
 import { SessionCard } from '@/components/SessionCard';
+import { SyncSummary } from '@/components/SyncSummary';
 import { Button, Card, Chip, Icon, SectionTitle, TabScreen, Txt } from '@/components/ui';
 import { CategoryFilterSheet } from '@/features/sessions/CategoryFilterSheet';
 import { DateRangeSheet } from '@/features/sessions/DateRangeSheet';
@@ -24,6 +25,7 @@ import {
 } from '@/features/sessions/queries';
 import { resumeDraft } from '@/features/sessions/resume';
 import { formatDay } from '@/lib/dates';
+import { syncNow } from '@/sync/worker';
 import { size, space } from '@/theme/tokens';
 
 const SEARCH_DELAY_MS = 250;
@@ -81,6 +83,7 @@ export default function HistoryScreen() {
 
   return (
     <TabScreen title="History">
+      <SyncSummary />
       <View style={styles.controls}>
         <SearchField
           value={text}
@@ -176,6 +179,7 @@ export default function HistoryScreen() {
                 key={s.id}
                 session={s}
                 onPress={() => router.push({ pathname: '/session/[id]', params: { id: s.id } })}
+                onRetry={() => void syncNow()}
               />
             ))}
           </View>

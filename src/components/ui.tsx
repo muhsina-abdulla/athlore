@@ -16,6 +16,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useAuth } from '@/auth/store';
+import { initialsOf } from '@/auth/user';
 import { KeyboardScrollView } from '@/components/KeyboardScrollView';
 
 import {
@@ -123,6 +125,8 @@ type ButtonProps = {
   onPress?: () => void;
   variant?: ButtonVariant;
   icon?: IconName;
+  // A custom element before the title, used instead of `icon` (e.g. a brand logo).
+  leading?: ReactNode;
   disabled?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -141,6 +145,7 @@ export function Button({
   onPress,
   variant = 'primary',
   icon,
+  leading,
   disabled,
   loading,
   style,
@@ -164,7 +169,7 @@ export function Button({
         <ActivityIndicator color={colors[textColor]} />
       ) : (
         <>
-          {icon ? <Icon name={icon} color={textColor} /> : null}
+          {leading ?? (icon ? <Icon name={icon} color={textColor} /> : null)}
           <Txt variant="label" color={textColor}>
             {title}
           </Txt>
@@ -322,6 +327,8 @@ type TabScreenProps = {
 };
 
 export function TabScreen({ title, subtitle, initials, children }: TabScreenProps) {
+  const user = useAuth((s) => s.user);
+  const shownInitials = initials ?? initialsOf(user?.name ?? null, user?.email ?? null);
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.tabContent}>
@@ -334,7 +341,7 @@ export function TabScreen({ title, subtitle, initials, children }: TabScreenProp
             ) : null}
             <Txt variant="title">{title}</Txt>
           </View>
-          <Avatar initials={initials} />
+          <Avatar initials={shownInitials} />
         </View>
         {children}
       </ScrollView>
