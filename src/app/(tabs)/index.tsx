@@ -10,9 +10,6 @@ import { resumeDraft } from '@/features/sessions/resume';
 import { addDays, todayKey, weekStartKey } from '@/lib/dates';
 import { colors, radius, size, space } from '@/theme/tokens';
 
-// TODO: replace with initials from the signed-in Google profile once auth exists.
-const PLACEHOLDER_INITIALS = 'AL';
-
 function greeting(date: Date) {
   const hour = date.getHours();
   if (hour < 12) return 'Good morning';
@@ -48,7 +45,7 @@ export default function HomeScreen() {
 
   // TODO: next milestone card once goals and milestones exist (phase 3).
   return (
-    <TabScreen title={greeting(now)} subtitle={dateLabel} initials={PLACEHOLDER_INITIALS}>
+    <TabScreen title={greeting(now)} subtitle={dateLabel}>
       {latestDraft ? (
         <Pressable
           onPress={() => resumeDraft(latestDraft)}

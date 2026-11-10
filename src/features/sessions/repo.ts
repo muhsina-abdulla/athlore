@@ -22,6 +22,7 @@ import {
   type SetEntry,
 } from '@/features/sessions/formState';
 import { newId } from '@/lib/id';
+import { requestSync } from '@/sync/signal';
 import { todayKey } from '@/lib/dates';
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
@@ -97,6 +98,8 @@ function enqueue(
       set: { status: 'pending', attempts: 0, lastError: null },
     })
     .run();
+  // The worker waits a moment, so by the time it runs the transaction has committed.
+  requestSync();
 }
 
 // ---------- Drafts ----------

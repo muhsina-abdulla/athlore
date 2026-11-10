@@ -6,7 +6,15 @@ import type { SessionRow } from '@/features/sessions/queries';
 import { size, space } from '@/theme/tokens';
 
 // One session in a list. Used by History and by the Home screen's last session.
-export function SessionCard({ session, onPress }: { session: SessionRow; onPress: () => void }) {
+export function SessionCard({
+  session,
+  onPress,
+  onRetry,
+}: {
+  session: SessionRow;
+  onPress: () => void;
+  onRetry?: () => void;
+}) {
   const title = session.trainingFocus ?? session.categoryName ?? 'Session';
   const meta = [
     session.trainingFocus ? session.categoryName : null,
@@ -33,7 +41,7 @@ export function SessionCard({ session, onPress }: { session: SessionRow; onPress
       ) : null}
       {session.sync !== 'synced' ? (
         <View style={styles.sync}>
-          <SyncBadge status={session.sync} />
+          <SyncBadge status={session.sync} onRetry={onRetry} />
         </View>
       ) : null}
     </Card>

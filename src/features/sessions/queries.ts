@@ -295,6 +295,22 @@ export function useRecentExerciseIds(limit = 6): string[] {
   return data.map((r) => r.exerciseId);
 }
 
+// ---------- Sync ----------
+
+// Sessions that have not reached the server yet: waiting (pending, or being sent
+// right now) and failed (the server refused them; they are retried on every sync).
+export function useSyncCounts(): { waiting: number; failed: number } {
+  const { data } = useLiveQuery(
+    db
+      .select({ status: outbox.status, n: sql<number>`count(*)` })
+      .from(outbox)
+      .where(eq(outbox.entity, 'session'))
+      .groupBy(outbox.status),
+  );
+  const count = (status: string) => data.find((row) => row.status === status)?.n ?? 0;
+  return { waiting: count('pending') + count('in_flight'), failed: count('failed') };
+}
+
 // ---------- Recently deleted ----------
 
 export type DeletedSessionRow = {

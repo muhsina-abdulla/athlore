@@ -10,8 +10,11 @@ import { DarkTheme, Stack, ThemeProvider, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { View } from 'react-native';
 
+import { startAuth, useAuth } from '@/auth/store';
 import { DatabaseGate } from '@/db/DatabaseGate';
+import { startSyncWorker } from '@/sync/worker';
 import { colors } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
@@ -28,6 +31,43 @@ const navTheme: Theme = {
     notification: colors.danger,
   },
 };
+
+// Everything that needs the database lives in here, so it only starts once the
+// database is ready. Starts sign-in and the background sync, and sends someone who
+// isn't signed in to the sign-in screen.
+function AppStack() {
+  const status = useAuth((s) => s.status);
+
+  useEffect(() => startAuth(), []);
+  useEffect(() => startSyncWorker(), []);
+
+  // Show the background colour, not a spinner, while checking for a saved sign-in.
+  if (status === 'loading') return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+
+  // Without Supabase set up (localOnly) the app runs on the phone alone.
+  const allowed = status === 'signedIn' || status === 'localOnly';
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.bg },
+        animation: 'slide_from_right',
+      }}
+    >
+      <Stack.Screen name="auth-callback" />
+      <Stack.Protected guard={allowed}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="log" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="session/[id]" />
+        <Stack.Screen name="deleted" />
+      </Stack.Protected>
+      <Stack.Protected guard={!allowed}>
+        <Stack.Screen name="sign-in" />
+      </Stack.Protected>
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -48,17 +88,7 @@ export default function RootLayout() {
     <ThemeProvider value={navTheme}>
       <StatusBar style="light" />
       <DatabaseGate>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.bg },
-            animation: 'slide_from_right',
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="log" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="session/[id]" />
-        </Stack>
+        <AppStack />
       </DatabaseGate>
     </ThemeProvider>
   );
