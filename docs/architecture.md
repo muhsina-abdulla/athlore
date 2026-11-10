@@ -7,12 +7,12 @@ How Athlore is built, and why. Product intent lives in [vision.md](vision.md) an
 | Area | Decision |
 | --- | --- |
 | App | Expo SDK 58, React Native 0.88, TypeScript strict, **Expo Router** (routes in `src/app/`) |
-| Build | **EAS development build** from Phase 2 onward (needed for native Google sign-in). Expo Go is no longer the target. |
+| Build | Runs in **Expo Go** today (sign-in goes through the browser, so no native module is needed). An installable build (EAS `preview` profile) is for using the app without the computer running. |
 | Local storage | **SQLite** (`expo-sqlite`) + **Drizzle ORM**. The local DB is the source of truth for the UI. |
 | Backend | **Supabase**: Postgres, Google auth, Row Level Security, Edge Functions (AI, later) |
-| Sync | **Hand-rolled outbox**: push with idempotent upserts by client UUID, pull by `updated_at` |
+| Sync | **Hand-rolled outbox**: a session is pushed whole by one all-or-nothing database function (`push_session`); lookups are upserts; pull by `updated_at` |
 | State | Drizzle live queries for data, React state for forms, a small **Zustand** store for sync status. No TanStack Query. |
-| Auth | Google only: `@react-native-google-signin/google-signin` → `supabase.auth.signInWithIdToken` |
+| Auth | Google only, through the browser: `supabase.auth.signInWithOAuth` (PKCE) opened with `expo-web-browser`, the returned code exchanged for a session. Works in Expo Go and in a built app. The session is kept in the phone's SQLite (`expo-sqlite/localStorage`). Without a `.env` the app runs on the phone alone (no sign-in, no sync). |
 | AI | Phase 5. Runs in a Supabase Edge Function, so no keys ship in the app. Provider to be chosen then. |
 | Migration | One-off local Node script in `scripts/migrate/`. Not an app feature. |
 
@@ -176,15 +176,26 @@ The default categories and session types use fixed UUIDs, seeded locally and on 
 
 ## Sync
 
-- **Triggers:** app start, app returns to the foreground, network reconnects, after every save, and manual "Retry all".
+The code is in `src/sync/`. The engine (`engine.ts`) is plain logic that talks to the server through the small `RemoteApi` interface (`remote.ts`), so it can be tested against a pretend server; `supabaseRemote.ts` is the real one, and `worker.ts` decides when to run.
+
+- **When it runs:** a moment after anything is saved (`requestSync` in `signal.ts`, called whenever something is queued), when the app opens or returns to the foreground, right after signing in, every 5 minutes while open, and on "Retry all". One run at a time; a request during a run triggers one more run afterwards.
 - **Push:**
-  - Drain the outbox in order, children after parents.
-  - Back off exponentially on failure.
+  - Entries go in order: categories, session types, exercises, then sessions, so a session never arrives before what it points at.
+  - A session is saved with one call to the `push_session` database function (`supabase/migrations/20261108000000_push_session.sql`): the session and all its types, exercises and sets in a single all-or-nothing step. Children are replaced as a whole, so a retry never duplicates.
+  - An entry is removed only after the server confirms, and only if the item was not edited again while the push was running (its `updated_at` is compared). Otherwise it stays queued and the newer version goes next time.
+  - When the server confirms a session, its `submitted_at` is stored locally. That is the moment it counts as submitted.
+  - Offline or an expired sign-in stops the run at once and leaves everything queued and untouched. A refusal from the server marks only that entry `failed` (with the reason) and the run carries on; failed entries are retried on every run.
+  - The app never pushes shared defaults (they belong to the server), master-list exercises, or entries whose row no longer exists; those are just dropped from the outbox.
+  - An entry left "in flight" by an app that was killed mid-push is reset and sent again.
 - **Pull:**
-  - Per table, select rows with `updated_at > last_pulled_at` and upsert them locally.
-  - Rows with pending outbox entries are skipped so a pull doesn't overwrite local unsynced work.
-- **Conflicts:** last write wins per row. For one user on one phone that's enough. Revisit only if multi-device editing becomes real.
-- **Timestamps:** `updated_at` comes from the server clock (trigger), so pull ordering doesn't depend on the phone's clock.
+  - Per table, in the same order, rows changed since the last pull are copied down (the first page starts 2 minutes before the saved position, in case a row committed late; re-applying a row is harmless). A fresh phone gets everything back this way.
+  - A session is replaced together with its children, in one transaction.
+  - A row with an unsent local change is left alone. That is checked again inside the transaction that writes it, because fetching the children takes time and an edit made meanwhile must never be overwritten by the older server copy.
+  - If a row cannot be applied, the saved position is not moved past it, so it is tried again next time instead of being skipped for good. A same-named entry from elsewhere is skipped without counting as a failure.
+  - Children are read page by page (the server returns at most 1000 rows per request and does not say when it cuts a result short).
+- **Conflicts:** last write wins per row, except that the phone's own unsent edit always wins until it has been pushed. For one person that is enough; revisit only if editing from several devices becomes real.
+- **Timestamps:** `updated_at` and `submitted_at` come from the server clock, so pull ordering never depends on the phone's clock.
+- **Known limit:** a pull page is 1000 rows. More than 1000 rows sharing one exact `updated_at` would not all be fetched; a one-off migration inserts far fewer.
 
 ## Analytics
 
@@ -225,12 +236,14 @@ The default categories and session types use fixed UUIDs, seeded locally and on 
 
 ## Environment and secrets
 
-- `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` live in `.env`. Both are public by design, and RLS protects the data.
+- `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` live in `.env` (copy `.env.example`). Both are public by design, and RLS protects the data. After changing `.env`, restart with `npx expo start --clear`.
 - The service-role key is used only by the migration script. It never goes in the app.
-- The Supabase session is persisted with `expo-secure-store`.
-- Google OAuth client IDs (Android + web) go in `app.json` config / `.env`.
+- The Supabase session is kept in the phone's SQLite through `expo-sqlite/localStorage` (Supabase's own current Expo guide does the same).
+- The Google OAuth client (a **Web application** client) lives in Google Cloud and is entered in the Supabase dashboard under Authentication > Providers > Google. Its authorized redirect URI is Supabase's callback URL. No Google keys are in the app.
+- Supabase Authentication > URL Configuration must allow the address the app returns to: `exp://**` for Expo Go and `athlore://**` for a built app.
 
 ## Build and run
 
-- Development: `eas build --profile development --platform android` once, then `npx expo start --dev-client`. Rebuild only when native dependencies change.
+- Development: `npx expo start` and open the project in Expo Go (the installed Expo Go must match the SDK).
+- To use the app away from the computer: `npx eas-cli@latest build --platform android --profile preview` produces an installable APK.
 - Releases come later through EAS Build and EAS Update.
