@@ -18,6 +18,7 @@ expo-env.d.ts
 *.xlsx
 *.xls
 *.csv
+/data/
 
 # My personal checklist of queries and editor theme (kept local)
 /QUERIES.md

@@ -231,8 +231,15 @@ The code is in `src/sync/`. The engine (`engine.ts`) is plain logic that talks t
 **Duplicates and modes**
 - Duplicates are detected by a hash of (training date, timestamp, focus) and reported, not inserted.
 - **Dry-run mode** writes nothing and produces the review report.
-- **Real run** writes to Supabase with the service-role key (kept in a gitignored `.env`). The app then pulls the rows like any other data.
-- The report never leaves the machine.
+- **Real run** (`--apply --user-email <you>`) writes to Supabase with the service-role key (kept in the gitignored `.env.migrate`). The app then pulls the rows like any other data.
+- The report never leaves the machine. It lists row numbers, dates and raw durations only, never entry text.
+
+**Using it** (`scripts/migrate/legacy-sessions.mjs`, logic in `parse.mjs`)
+- Keep the CSV in `data/` (gitignored). A dry run is the default: `node scripts/migrate/legacy-sessions.mjs --file "data/<name>.csv"`.
+- Each entry gets a fixed id made from (training date, timestamp, focus), so running it again can never duplicate. Existing rows are never overwritten, so an edit made in the app survives a re-run.
+- The form's Timestamp has no time zone. It is read as `+05:30` unless `--utc-offset` says otherwise, and is stored as `submitted_at` and `created_at`.
+- A duration with no unit (`1.75`) is read as hours and listed in the report. A fraction that could be minutes (`3.45h`) is left empty and listed. Decide it in `data/duration-overrides.json`, for example `{ "61": 207 }` (data row number to minutes).
+- Migrated sessions have no category, session types, coach or exercises, and `mood_scale` stays empty (the text is in `mood_text`). Saving an edit to one in the app needs a category to be chosen first.
 
 ## Environment and secrets
 
