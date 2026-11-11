@@ -4,6 +4,8 @@ export type AppUser = {
   id: string;
   email: string | null;
   name: string | null;
+  // The picture on their Google account, if there is one. Shown until they choose their own.
+  avatarUrl: string | null;
 };
 
 // Two capital letters for the avatar: first and last name when there is a name,

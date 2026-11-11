@@ -23,6 +23,8 @@ type SyncStatusStore = {
   begin: () => void;
   finish: (summary: SyncSummary) => void;
   fail: (message: string) => void;
+  // Forget the last run, for when someone signs out.
+  reset: () => void;
 };
 
 export const useSyncStatus = create<SyncStatusStore>((set) => ({
@@ -40,4 +42,5 @@ export const useSyncStatus = create<SyncStatusStore>((set) => ({
     });
   },
   fail: (message) => set({ state: 'error', lastError: message }),
+  reset: () => set({ state: 'idle', lastSyncedAt: null, lastError: null }),
 }));

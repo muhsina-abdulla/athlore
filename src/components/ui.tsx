@@ -1,8 +1,9 @@
 import { MaterialIcons, type MaterialIconsIconName } from '@react-native-vector-icons/material-icons';
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -19,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/store';
 import { initialsOf } from '@/auth/user';
 import { KeyboardScrollView } from '@/components/KeyboardScrollView';
+import { useAvatarUri } from '@/features/profile/photo';
 
 import {
   colors,
@@ -242,22 +244,48 @@ export function ProgressBar({ value }: { value: number }) {
 
 // ---------- Avatar ----------
 
-export function Avatar({ initials, onPress }: { initials?: string; onPress?: () => void }) {
+type AvatarProps = {
+  initials?: string;
+  // A picture to show instead of the initials. If it fails to load (for example a Google
+  // picture while offline), the initials are shown.
+  uri?: string | null;
+  // Diameter. Defaults to the small header avatar.
+  dimension?: number;
+  onPress?: () => void;
+  accessibilityLabel?: string;
+};
+
+export function Avatar({
+  initials,
+  uri,
+  dimension = size.avatar,
+  onPress,
+  accessibilityLabel = 'Profile',
+}: AvatarProps) {
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const showImage = Boolean(uri) && uri !== failedUri;
+  const large = dimension > size.avatar;
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      accessibilityRole="button"
-      accessibilityLabel="Profile"
-      hitSlop={(size.touch - size.avatar) / 2}
-      style={styles.avatar}
+      accessibilityRole={onPress ? 'button' : 'image'}
+      accessibilityLabel={accessibilityLabel}
+      hitSlop={Math.max(0, (size.touch - dimension) / 2)}
+      style={[styles.avatar, { width: dimension, height: dimension }]}
     >
-      {initials ? (
-        <Txt variant="label" color="onAccent">
+      {showImage ? (
+        <Image
+          source={{ uri: uri as string }}
+          style={{ width: dimension, height: dimension }}
+          onError={() => setFailedUri(uri ?? null)}
+        />
+      ) : initials ? (
+        <Txt variant={large ? 'title' : 'label'} color="onAccent">
           {initials}
         </Txt>
       ) : (
-        <Icon name="person" size={size.iconSm} color="onAccent" />
+        <Icon name="person" size={large ? size.iconXl : size.iconSm} color="onAccent" />
       )}
     </Pressable>
   );
@@ -329,6 +357,7 @@ type TabScreenProps = {
 export function TabScreen({ title, subtitle, initials, children }: TabScreenProps) {
   const user = useAuth((s) => s.user);
   const shownInitials = initials ?? initialsOf(user?.name ?? null, user?.email ?? null);
+  const avatarUri = useAvatarUri();
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.tabContent}>
@@ -341,7 +370,11 @@ export function TabScreen({ title, subtitle, initials, children }: TabScreenProp
             ) : null}
             <Txt variant="title">{title}</Txt>
           </View>
-          <Avatar initials={shownInitials} />
+          <Avatar
+            initials={shownInitials}
+            uri={avatarUri}
+            onPress={() => router.push('/profile')}
+          />
         </View>
         {children}
       </ScrollView>
@@ -453,6 +486,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
 
   sectionTitle: {

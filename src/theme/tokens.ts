@@ -65,6 +65,8 @@ export const size = {
   iconXl: 32,
   emptyTile: 72,
   brandMark: 96,
+  avatarLarge: 112,
+  avatarBadge: 36,
   star: 28,
   starInput: 40,
   dialogMax: 360,

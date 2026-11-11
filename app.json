@@ -34,7 +34,14 @@
         }
       ],
       "@react-native-vector-icons/material-icons",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Athlore uses your photos so you can choose a profile picture.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "scheme": "athlore",
     "backgroundColor": "#14161A",
