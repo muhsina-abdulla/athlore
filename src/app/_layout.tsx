@@ -14,6 +14,7 @@ import { View } from 'react-native';
 
 import { startAuth, useAuth } from '@/auth/store';
 import { DatabaseGate } from '@/db/DatabaseGate';
+import { useMilestoneEvaluator } from '@/features/goals/evaluator';
 import { loadProfilePhoto, LOCAL_OWNER } from '@/features/profile/photo';
 import { startSyncWorker } from '@/sync/worker';
 import { colors } from '@/theme/tokens';
@@ -45,6 +46,7 @@ function AppStack() {
   // The profile photo belongs to whoever is signed in (or to the phone, without sign-in).
   useEffect(() => loadProfilePhoto(userId ?? LOCAL_OWNER), [userId]);
   useEffect(() => startSyncWorker(), []);
+  useMilestoneEvaluator();
 
   // Show the background colour, not a spinner, while checking for a saved sign-in.
   if (status === 'loading') return <View style={{ flex: 1, backgroundColor: colors.bg }} />;

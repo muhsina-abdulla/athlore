@@ -4,7 +4,14 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { SessionCard } from '@/components/SessionCard';
 import { WeekDots } from '@/components/WeekDots';
-import { Card, Icon, SectionTitle, TabScreen, Txt } from '@/components/ui';
+import { Card, Icon, ProgressBar, SectionTitle, TabScreen, Txt } from '@/components/ui';
+import {
+  fractionOf,
+  summarizeGoal,
+  useGoals,
+  useMilestones,
+  useSessionFacts,
+} from '@/features/goals/queries';
 import { useDrafts, useSessionRows, useTrainingDates } from '@/features/sessions/queries';
 import { resumeDraft } from '@/features/sessions/resume';
 import { addDays, todayKey, weekStartKey } from '@/lib/dates';
@@ -26,6 +33,9 @@ export default function HomeScreen() {
   const rows = useSessionRows();
   const drafts = useDrafts();
   const weekDates = useTrainingDates(weekStart, weekEnd);
+  const goals = useGoals();
+  const milestones = useMilestones();
+  const facts = useSessionFacts();
 
   const dateLabel = now.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -43,7 +53,11 @@ export default function HomeScreen() {
   const latestDraft = drafts[0];
   const isEmpty = rows.length === 0 && drafts.length === 0;
 
-  // TODO: next milestone card once goals and milestones exist (phase 3).
+  // The first step not yet done, on the first goal that has one.
+  const next = goals
+    .map((g) => ({ goal: g, step: summarizeGoal(milestones.filter((m) => m.goalId === g.id)).next }))
+    .find((entry) => entry.step !== null);
+
   return (
     <TabScreen title={greeting(now)} subtitle={dateLabel}>
       {latestDraft ? (
@@ -95,6 +109,37 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
+      {next?.step ? (
+        <View>
+          <SectionTitle
+            title="Next milestone"
+            action={{ label: 'Progress', onPress: () => router.navigate('/progress') }}
+          />
+          <Card onPress={() => router.navigate('/progress')} accessibilityLabel="Open progress">
+            <Txt variant="caption" color="textSecondary">
+              {next.goal.title}
+            </Txt>
+            <View style={styles.milestoneTop}>
+              <Txt variant="label" style={styles.milestoneTitle} numberOfLines={2}>
+                {next.step.title}
+              </Txt>
+              {next.step.kind === 'measurable' ? (
+                <Txt variant="label" color="accent">
+                  {`${Math.round(fractionOf(next.step, facts) * 100)}%`}
+                </Txt>
+              ) : null}
+            </View>
+            {next.step.kind === 'measurable' ? (
+              <ProgressBar value={fractionOf(next.step, facts)} />
+            ) : (
+              <Txt variant="caption" color="textSecondary">
+                Skill milestone. Mark it done when you have it.
+              </Txt>
+            )}
+          </Card>
+        </View>
+      ) : null}
+
       {lastSession ? (
         <View>
           <SectionTitle
@@ -128,4 +173,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.8 },
   stats: { flexDirection: 'row', gap: space.xxxl, marginBottom: space.lg },
   stat: { gap: space.xxs },
+  milestoneTop: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
+  milestoneTitle: { flex: 1 },
 });

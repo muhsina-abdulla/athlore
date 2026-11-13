@@ -33,23 +33,23 @@ Build the foundation for recording and reviewing MMA training.
 
 Turn the training history into a clearer view of progress.
 
-- [ ] Goals
-- [ ] Goal-specific milestone paths
-- [ ] Automatic measurable milestones
-- [ ] Manual skill milestones
-- [ ] Milestone progress views
-- [ ] Basic progress statistics
+- [x] Goals
+- [x] Goal-specific milestone paths
+- [x] Automatic measurable milestones
+- [x] Manual skill milestones
+- [x] Milestone progress views
+- [x] Basic progress statistics (Insights)
 
 ## Phase 4 — Analytics
 
 Start exploring what the accumulated training data reveals.
 
-- [ ] Training frequency and consistency
-- [ ] Training duration trends
-- [ ] Category and session-type breakdowns
-- [ ] Self-rating trends
+- [x] Training frequency and consistency
+- [ ] Training duration trends (totals shown; no trend yet)
+- [x] Category and session-type breakdowns
+- [x] Self-rating trends
 - [ ] Exercise history
-- [ ] Training-day vs session-level analytics
+- [x] Training-day vs session-level analytics
 - [ ] Milestone-related analytics
 - [ ] Initial pattern discovery
 

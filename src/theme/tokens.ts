@@ -81,6 +81,14 @@ export const size = {
   weekDay: 36,
   moodCircle: 44,
   inputMulti: 96,
+  milestoneNode: 56,
+  pathLine: 4,
+  pathRow: 104,
+  nodeBorder: 2,
+  barMax: 96,
+  barColumn: 28,
+  barLabel: 96,
+  statTile: 120,
 } as const;
 
 export const opacity = {

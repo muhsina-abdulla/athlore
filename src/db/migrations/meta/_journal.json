@@ -29,6 +29,13 @@
       "when": 1794044509458,
       "tag": "0003_clean_the_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794399649902,
+      "tag": "0004_goals_and_milestones",
+      "breakpoints": true
     }
   ]
 }

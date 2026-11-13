@@ -156,6 +156,56 @@ export const exerciseSets = sqliteTable(
   (t) => [index('exercise_sets_session_exercise_idx').on(t.sessionExerciseId)],
 );
 
+// ---------- Goals and milestones ----------
+// Not synced yet: they live on this phone until their Supabase tables and outbox
+// entries are built (see docs/roadmap.md).
+
+export const goals = sqliteTable('goals', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  position: integer('position').notNull(),
+  archivedAt: integer('archived_at', { mode: 'timestamp_ms' }),
+  ...timestamps,
+});
+
+export const MILESTONE_KINDS = ['measurable', 'skill'] as const;
+export type MilestoneKind = (typeof MILESTONE_KINDS)[number];
+
+// A step on a goal's path. A measurable milestone completes by itself when its criteria
+// are met; a skill milestone is ticked off by hand.
+export const milestones = sqliteTable(
+  'milestones',
+  {
+    id: text('id').primaryKey(),
+    goalId: text('goal_id')
+      .notNull()
+      .references(() => goals.id),
+    position: integer('position').notNull(),
+    title: text('title').notNull(),
+    kind: text('kind', { enum: MILESTONE_KINDS }).notNull(),
+    // JSON, measurable milestones only (see features/goals/criteria.ts).
+    criteria: text('criteria'),
+    completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
+    completedBy: text('completed_by', { enum: ['auto', 'manual'] }),
+    ...timestamps,
+  },
+  (t) => [index('milestones_goal_idx').on(t.goalId)],
+);
+
+// Sessions a milestone is linked to (optional).
+export const milestoneSessions = sqliteTable(
+  'milestone_sessions',
+  {
+    milestoneId: text('milestone_id')
+      .notNull()
+      .references(() => milestones.id, { onDelete: 'cascade' }),
+    sessionId: text('session_id')
+      .notNull()
+      .references(() => sessions.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.milestoneId, t.sessionId] })],
+);
+
 // ---------- Local only (never synced) ----------
 
 // One autosaved form per session being written or edited. The id is the
